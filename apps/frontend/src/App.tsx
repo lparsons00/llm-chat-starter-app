@@ -1,4 +1,5 @@
 import { Chat } from "@/components/chat/chat";
+import { SessionSidebar } from "@/components/session/session-sidebar";
 
 const App = () => {
   return (
@@ -9,8 +10,11 @@ const App = () => {
           <span className="text-sm text-muted-foreground">v1.0</span>
         </h1>
       </header>
-      <main className="flex-1 min-h-0">
-        <Chat />
+      <main className="flex-1 min-h-0 flex">
+        <SessionSidebar className="w-80 flex-none" />
+        <div className="flex-1 min-w-0">
+          <Chat />
+        </div>
       </main>
     </div>
   );

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useMessages } from "@/store/messages";
+import { useConversations } from "@/store/conversations";
 
 interface ChatInputProps {
   onTypingChange: (isTyping: boolean) => void;
@@ -12,7 +12,15 @@ interface ChatInputProps {
 export const ChatInput = ({ onTypingChange }: ChatInputProps) => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { messages, addMessage, updateLastMessage } = useMessages();
+  const { 
+    currentSessionId, 
+    getCurrentSession, 
+    addMessage, 
+    updateLastMessage,
+    createSession 
+  } = useConversations();
+  const currentSession = getCurrentSession();
+  const messages = currentSession?.messages || [];
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Focus input when loading state changes to false
@@ -28,14 +36,20 @@ export const ChatInput = ({ onTypingChange }: ChatInputProps) => {
 
     if (!input.trim() || isLoading) return;
 
+    // Ensure we have a current session
+    let sessionId = currentSessionId;
+    if (!sessionId) {
+      sessionId = createSession();
+    }
+
     // Add user message
-    addMessage({
+    addMessage(sessionId, {
       role: "user",
       content: input,
     });
 
     // Add empty assistant message that will be streamed
-    addMessage({
+    addMessage(sessionId, {
       role: "assistant",
       content: "",
     });
@@ -74,8 +88,8 @@ export const ChatInput = ({ onTypingChange }: ChatInputProps) => {
           if (line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.slice(6));
-              if (data.content) {
-                updateLastMessage(data.content);
+              if (data.content && sessionId) {
+                updateLastMessage(sessionId, data.content);
               }
             } catch (e) {
               console.error("Error parsing SSE data:", e);
@@ -85,7 +99,9 @@ export const ChatInput = ({ onTypingChange }: ChatInputProps) => {
       }
     } catch (error) {
       console.error("Error:", error);
-      updateLastMessage("Sorry, there was an error processing your request.");
+      if (sessionId) {
+        updateLastMessage(sessionId, "Sorry, there was an error processing your request.");
+      }
     } finally {
       setIsLoading(false);
     }

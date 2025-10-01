@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from "react";
 
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatMessage } from "@/components/chat/chat-message";
-import { useMessages } from "@/store/messages";
+import { useConversations } from "@/store/conversations";
 
 export const Chat = () => {
-  const { messages } = useMessages();
+  const { getCurrentSession } = useConversations();
+  const currentSession = getCurrentSession();
+  const messages = currentSession?.messages || [];
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [isTyping, setIsTyping] = useState(false);
 
